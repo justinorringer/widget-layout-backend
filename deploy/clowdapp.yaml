@@ -77,6 +77,50 @@ objects:
                 cpu: ${CPU_REQUEST_WIDGET_LAYOUT}
                 memory: ${MEMORY_REQUEST_WIDGET_LAYOUT}
 
+        - name: mcp
+          minReplicas: ${{MCP_MIN_REPLICAS}}
+          webServices:
+            private:
+              enabled: true
+          podSpec:
+            image: ${MCP_IMAGE}:${MCP_IMAGE_TAG}
+            livenessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /healthz
+                port: 10000
+                scheme: HTTP
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 5
+            readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /ready
+                port: 10000
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 5
+              successThreshold: 1
+              timeoutSeconds: 5
+            env:
+            - name: PORT
+              value: "10000"
+            - name: WIDGET_LAYOUT_API_URL
+              value: "http://widget-layout-backend-api:8000"
+            - name: LOG_LEVEL
+              value: ${MCP_LOG_LEVEL}
+            - name: NODE_ENV
+              value: "production"
+            resources:
+              limits:
+                cpu: ${CPU_LIMIT_MCP}
+                memory: ${MEMORY_LIMIT_MCP}
+              requests:
+                cpu: ${CPU_REQUEST_MCP}
+                memory: ${MEMORY_REQUEST_MCP}
+
 parameters:
 - description: Determines Clowder deployment
   name: CLOWDER_ENABLED
@@ -114,3 +158,28 @@ parameters:
 - description: FEO generated widget mapping chrome configmap
   name: FEO_WIDGET_MAPPING_CONFIGMAP
   value: widget-registry-cfg
+- description: Min replicas for the MCP sidecar
+  name: MCP_MIN_REPLICAS
+  value: '1'
+- description: MCP sidecar image name
+  name: MCP_IMAGE
+  value: quay.io/redhat-services-prod/hcc-platex-services-tenant/widget-layout-backend/widget-layout-backend-mcp
+- description: MCP sidecar image tag
+  name: MCP_IMAGE_TAG
+  value: latest
+  required: true
+- description: The log level for the MCP sidecar
+  name: MCP_LOG_LEVEL
+  value: info
+- description: Cpu limit of MCP sidecar
+  name: CPU_LIMIT_MCP
+  value: 250m
+- description: Memory limit of MCP sidecar
+  name: MEMORY_LIMIT_MCP
+  value: 256Mi
+- description: Cpu requests of MCP sidecar
+  name: CPU_REQUEST_MCP
+  value: 100m
+- description: Memory requests of MCP sidecar
+  name: MEMORY_REQUEST_MCP
+  value: 128Mi
